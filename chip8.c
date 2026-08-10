@@ -80,6 +80,7 @@ void chip8_update_timers(Chip8 *chip8) {
 void chip8_execute(Chip8 *chip8, uint16_t opcode) {
     uint16_t firstDigit = opcode >> 12;
     uint16_t lastTwoDigits = opcode & 0xFF;
+    //uint16_t lastDigit = opcode & 0xF;
 
     switch(firstDigit) {
         case 0x0: {
@@ -162,6 +163,57 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
         case 0x7: {
             uint8_t x = (opcode >> 8) & 0xF;
             chip8->V[x] += lastTwoDigits;
+            break;
+        }
+
+        case 0x8: {
+            uint8_t x = (opcode >> 8) & 0xF;
+            uint8_t y = (opcode >> 4) & 0xF;
+
+            switch(opcode & 0xF) {
+                case 0x0: {
+                    chip8->V[x] = chip8->V[y];
+                    break;
+                }
+
+                case 0x1: {
+                    chip8->V[x] |= chip8->V[y];
+                    break;
+                }
+
+                case 0x2: {
+                    chip8->V[x] &= chip8->V[y];
+                    break;
+                }
+
+                case 0x3: {
+                    chip8->V[x] ^= chip8->V[y];
+                    break;
+                }
+
+                case 0x4: {
+                    uint16_t sum = chip8->V[x] + chip8->V[y];
+
+                    chip8->V[0xF] = sum > 0xFF;
+                    chip8->V[x] = sum & 0xFF;
+                    break;
+                }
+
+                case 0x5: {
+                    chip8->V[0xF] = chip8->V[x] >= chip8->V[y];
+                    chip8->V[x] -= chip8->V[y];
+
+                    break;
+                }
+
+                case 0x6: {
+                    chip8->V[0xF] = chip8->V[x] & 0x1;
+                    chip8->V[x] >>= 0x1;
+
+                    break;
+                }
+            }
+
             break;
         }
 

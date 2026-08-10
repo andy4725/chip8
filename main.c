@@ -6,17 +6,15 @@ int main() {
 
     chip8_init(&chip8);
 
-    chip8.I = 0x300;
+    chip8.V[1] = 0xAB;
+    //chip8.V[2] = 0x02;
 
-    chip8.V[3] = 0x42;
-
-    printf("PC: %04X\n", chip8.pc);
-
-    chip8.memory[0x200] = 0x33;
-    chip8.memory[0x201] = 0x42;
+    chip8.memory[0x200] = 0x81;
+    chip8.memory[0x201] = 0x26;
 
     chip8_cycle(&chip8);
 
-    printf("PC: %04X\n", chip8.pc);
+    printf("V1: %02X\n", chip8.V[1]);
+    printf("VF: %01X\n", chip8.V[0xF]);
     return 0;
 }

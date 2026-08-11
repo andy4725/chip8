@@ -7,10 +7,10 @@ int main() {
     chip8_init(&chip8);
 
     chip8.V[1] = 0xAB;
-    //chip8.V[2] = 0x02;
+    //chip8.V[2] = 0x10;
 
     chip8.memory[0x200] = 0x81;
-    chip8.memory[0x201] = 0x26;
+    chip8.memory[0x201] = 0x2E;
 
     chip8_cycle(&chip8);
 

@@ -1,6 +1,7 @@
 #include "chip8.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 const uint8_t font[80] = {
@@ -212,7 +213,55 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
 
                     break;
                 }
+            
+                case 0x7: {
+                    chip8->V[0xF] = chip8->V[y] >= chip8->V[x];
+                    chip8->V[x] = chip8->V[y] - chip8->V[x];
+
+                    break;
+                }                
+            
+                case 0xE: {
+                    chip8->V[0xF] = (chip8->V[x] >> 7) & 0x1;
+                    chip8->V[x] <<= 0x1;
+
+                    break;
+                }
             }
+            break;
+        }
+
+        case 0x9: {
+            uint8_t x = (opcode >> 8) & 0xF;
+            uint8_t y = (opcode >> 4) & 0xF;
+
+            switch(opcode & 0xF) {
+                case 0x0: {
+                    if(chip8->V[x] != chip8->V[y]) {
+                        chip8->pc += 2;
+                    }
+
+                    break;
+                }
+            }
+            break;
+        }
+
+        case 0xA: {
+            chip8->I = opcode & 0xFFF;
+
+            break;
+        }
+
+        case 0xB: {
+            chip8->pc = (opcode & 0xFFF) + chip8->V[0];
+
+            break;
+        }
+
+        case 0xC: {
+            uint8_t x = (opcode >> 8) & 0xF;
+            chip8->V[x] = (uint8_t)rand() & lastTwoDigits;
 
             break;
         }
@@ -232,8 +281,8 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
 
                 for(int j = 0; j < 8; j++) {
                     if(sprite & (0x80 >> j)) {
-                        uint8_t pixelX = xCoordinate + j;
-                        uint8_t pixelY = yCoordinate + i;
+                        uint8_t pixelX = (xCoordinate + j) % 64;
+                        uint8_t pixelY = (yCoordinate + i) % 32;
 
                         uint16_t index = pixelX + pixelY * 64;
                         if(chip8->display[index] == 1) {

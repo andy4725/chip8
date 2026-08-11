@@ -41,14 +41,22 @@ int chip8_load_rom(Chip8 *chip8, const char *filename) {
         return 0;
     }
 
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    rewind(file);
+
+    if(size > 4096 - 0x200) {
+        printf("ROM is too large.\n");
+        fclose(file);
+        return 0;
+    }
+
     fread (
         &chip8->memory[0x200],
         1,
         4096 - 0x200,
         file
     );
-
-    
 
     fclose(file);
     return 1;
@@ -61,7 +69,7 @@ void chip8_cycle(Chip8 *chip8) {
         chip8->memory[chip8->pc] << 8 |
         chip8->memory[chip8->pc + 1];
 
-    printf("PC: %04X / Opcode: %04X\n", chip8->pc, opcode);
+    //printf("PC: %04X / Opcode: %04X\n", chip8->pc, opcode);
 
     chip8->pc += 2;
 
@@ -94,6 +102,11 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
                 }
 
                 case 0x00EE: { // RETURN
+                    if(chip8->sp == 0) {
+                        printf("Stack underflow\n");
+                        return;
+                    }
+
                     chip8->sp--;
                     chip8->pc = chip8->stack[chip8->sp];
 
@@ -114,6 +127,11 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
         }
 
         case 0x2: { // CALL SUBROUTINE
+            if(chip8->sp >= 16) {
+                printf("Stack overflow\n");
+                return;
+            }
+
             chip8->stack[chip8->sp] = chip8->pc;
             chip8->sp++;
 
@@ -277,6 +295,10 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
             chip8->V[15] = 0;
 
             for(int i = 0; i < height; i++) {
+                if(chip8->I + i >= 4096) {
+                    break;
+                }
+
                 uint8_t sprite = chip8->memory[chip8->I + i];
 
                 for(int j = 0; j < 8; j++) {
@@ -356,15 +378,26 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
                 }
 
                 case 0x33: {
-                    chip8->memory[chip8->I] = chip8->V[x] / 100;
-                    chip8->memory[chip8->I + 1] = chip8->V[x] % 100 / 10;
-                    chip8->memory[chip8->I + 2] = chip8->V[x] % 10;
+                    if(chip8->I < 4096) {
+                        chip8->memory[chip8->I] = chip8->V[x] / 100;
+                    }
+
+                    if(chip8->I + 1 < 4096) {
+                        chip8->memory[chip8->I + 1] = (chip8->V[x] / 10) % 10;
+                    }
+
+                    if(chip8->I + 2 < 4096) {
+                        chip8->memory[chip8->I + 2] = chip8->V[x] % 10;
+                    }
 
                     break;
                 }
 
                 case 0x55: {
                     for(int i = 0; i <= x; i++) {
+                        if((chip8->I + i) > 4095) {
+                            break;
+                        }
                         chip8->memory[chip8->I + i] = chip8->V[i];
                     }
                     break;
@@ -372,6 +405,9 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
 
                 case 0x65: {
                     for(int i = 0; i <= x; i++) {
+                        if((chip8->I + i) > 4095) {
+                            break;
+                        }
                         chip8->V[i] = chip8->memory[chip8->I + i];
                     }
                     break;

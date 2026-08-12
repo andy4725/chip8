@@ -41,6 +41,9 @@ int chip8_load_rom(Chip8 *chip8, const char *filename) {
         return 0;
     }
 
+    strncpy(chip8->romPath, filename, sizeof(chip8->romPath) - 1);
+    chip8->romPath[sizeof(chip8->romPath) - 1] = '\0';
+
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
     rewind(file);
@@ -416,4 +419,14 @@ void chip8_execute(Chip8 *chip8, uint16_t opcode) {
             break;
         }
     }
+}
+
+void chip8_reset(Chip8 *chip8) {
+    char romPath[256];
+
+    strncpy(romPath, chip8->romPath, sizeof(romPath));
+    romPath[sizeof(romPath) - 1] = '\0';
+
+    chip8_init(chip8);
+    chip8_load_rom(chip8, romPath);
 }

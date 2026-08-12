@@ -1,18 +1,23 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -I$(shell brew --prefix sdl3)/include -Isrc
+LDFLAGS = -L$(shell brew --prefix sdl3)/lib
+LIBS = -lSDL3
+
 TARGET = chip8
+OBJS = src/main.o src/chip8.o src/platform.o
 
-$(TARGET): main.o chip8.o
-	$(CC) $(CFLAGS) main.o chip8.o -o $(TARGET)
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBS) -o $(TARGET)
 
-main.o: main.c chip8.h
-	$(CC) $(CFLAGS) -c main.c
-
-chip8.o: chip8.c chip8.h
-	$(CC) $(CFLAGS) -c chip8.c
+src/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 run: $(TARGET)
-	./$(TARGET)
+	@if [ -z "$(ROM)" ]; then \
+		echo "Usage: make run ROM=<rom>"; \
+		exit 1; \
+	fi
+	./$(TARGET) $(ROM)
 
 clean:
-	rm -f $(TARGET) main.o chip8.o
+	rm -f $(TARGET) $(OBJS)
